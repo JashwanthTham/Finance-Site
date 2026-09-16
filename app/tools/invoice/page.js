@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
-
-export const dynamic = 'force-dynamic';
 
 let idCounter = 1;
 
@@ -12,7 +10,15 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function InvoiceTool() {
+export default function InvoiceToolPage() {
+  return (
+    <Suspense fallback={<main className="section"><div className="container">Loading…</div></main>}>
+      <InvoiceTool />
+    </Suspense>
+  );
+}
+
+function InvoiceTool() {
   const [invoiceNumber, setInvoiceNumber] = useState('1');
   const [business, setBusiness] = useState('');
   const [client, setClient] = useState('');
