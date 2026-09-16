@@ -5,6 +5,7 @@ const tools = [
   { href: '/tools/expenses', name: 'Expense tracker', desc: 'Log and total your expenses by category.' },
   { href: '/tools/pl', name: 'Profit & loss calculator', desc: 'See your margin from revenue and costs.' },
   { href: '/tools/breakeven', name: 'Break-even calculator', desc: 'Find out how many sales you need to cover costs.' },
+{ href: '/tools/quote', name: 'Quote generator', desc: 'Create an estimate to send before work is agreed on.' },
 ];
 
 export default function ToolsPage() {

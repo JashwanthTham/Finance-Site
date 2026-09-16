@@ -13,7 +13,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${serif.variable}`}>
-      <body>
+      <body suppressHydrationWarning>
         <Nav />
         {children}
             <footer className="footer">
@@ -23,6 +23,7 @@ export default function RootLayout({ children }) {
       <a href="/about">About</a>
       <a href="/faq">FAQ</a>
       <a href="/contact">Contact</a>
+      <a href="/learn">Learn</a>
     </span>
   </div>
         </footer>

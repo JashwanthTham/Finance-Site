@@ -1,6 +1,16 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Home() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setLoggedIn(!!data?.user));
+  }, []);
+
   return (
     <main>
       <section className="hero">
@@ -12,7 +22,11 @@ export default function Home() {
           </p>
           <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
             <Link href="/tools" className="btn btn-primary">Use the tools</Link>
-            <Link href="/signup" className="btn btn-secondary">Create a free account</Link>
+            {loggedIn ? (
+              <Link href="/dashboard" className="btn btn-secondary">Go to dashboard</Link>
+            ) : (
+              <Link href="/signup" className="btn btn-secondary">Create a free account</Link>
+            )}
           </div>
         </div>
       </section>

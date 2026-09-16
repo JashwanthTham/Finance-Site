@@ -26,6 +26,7 @@ export default function Nav() {
         <div className="nav-links">
           <Link href="/">Home</Link>
           <Link href="/tools">Tools</Link>
+          <Link href="/learn">Learn</Link>
           {user ? (
             <>
               <Link href="/dashboard">Dashboard</Link>

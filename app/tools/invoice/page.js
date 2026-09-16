@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
 
 let idCounter = 1;
@@ -19,7 +20,30 @@ export default function InvoiceTool() {
   const [items, setItems] = useState([
     { id: idCounter++, desc: '', qty: 1, rate: 0 },
   ]);
+  const [status, setStatus] = useState('sent');
   const [saveMessage, setSaveMessage] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (!id) return;
+    async function loadInvoice() {
+      const { data, error } = await supabase.from('invoices').select('*').eq('id', id).single();
+      if (error || !data) return;
+      setEditingId(data.id);
+      setBusiness(data.business_name || '');
+      setClient(data.client_name || '');
+      setDueDate(data.due_date || '');
+      setTaxRate(data.tax_rate || 0);
+      setStatus(data.status || 'sent');
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        setItems(data.items.map((it) => ({ ...it, id: idCounter++ })));
+      }
+    }
+    loadInvoice();
+  }, [searchParams]);
 
   function updateItem(id, field, value) {
     const cleaned = (field === 'qty' || field === 'rate') && Number(value) < 0 ? 0 : value;
@@ -43,22 +67,38 @@ export default function InvoiceTool() {
   }
 
   async function handleSave() {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData?.user) {
-      setSaveMessage('Create a free account to save invoices — this one still works to print or download.');
-      return;
-    }
-    const { error } = await supabase.from('invoices').insert({
-      user_id: userData.user.id,
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData?.user) {
+    setSaveMessage('Create a free account to save invoices — this one still works to print or download.');
+    return;
+  }
+  if (editingId) {
+    const { error } = await supabase.from('invoices').update({
       business_name: business,
       client_name: client,
       due_date: dueDate || null,
       tax_rate: taxRate,
       items,
       total,
-    });
-    setSaveMessage(error ? `Couldn't save: ${error.message}` : 'Invoice saved to your account.');
+      status,
+    }).eq('id', editingId);
+    if (!error) { router.push('/dashboard'); return; }
+    setSaveMessage(`Couldn't save: ${error.message}`);
+    return;
   }
+  const { error } = await supabase.from('invoices').insert({
+    user_id: userData.user.id,
+    business_name: business,
+    client_name: client,
+    due_date: dueDate || null,
+    tax_rate: taxRate,
+    items,
+    total,
+    status,
+  });
+  if (!error) { router.push('/dashboard'); return; }
+  setSaveMessage(`Couldn't save: ${error.message}`);
+}
 
   function formatDate(d) {
     if (!d) return '—';
@@ -69,8 +109,8 @@ export default function InvoiceTool() {
   return (
     <main className="section">
       <div className="container no-print" style={{ maxWidth: 720 }}>
-        <h1 style={{ fontSize: '1.8rem' }}>Invoice generator</h1>
-        <p>Fill this in, then print or save it as a PDF from the print dialog.</p>
+        <h1 style={{ fontSize: '1.8rem' }}>{editingId ? 'Viewing saved invoice' : 'Invoice generator'}</h1>
+        <p>{editingId ? 'You can edit and update this, or print/save it as a PDF.' : 'Fill this in, then print or save it as a PDF from the print dialog.'}</p>
 
         <div className="card" style={{ marginTop: 24 }}>
           <div className="line-row" style={{ gridTemplateColumns: '1fr 1fr' }}>
@@ -128,9 +168,18 @@ export default function InvoiceTool() {
             <div className="big">Total: ${total.toFixed(2)}</div>
           </div>
 
+          <div className="field" style={{ marginTop: 24, maxWidth: 200 }}>
+            <label>Status (when saved)</label>
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="draft">Draft</option>
+              <option value="sent">Sent</option>
+              <option value="paid">Paid</option>
+            </select>
+          </div>
+
           <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
             <button className="btn btn-primary" onClick={handlePrint} type="button">Print / save as PDF</button>
-            <button className="btn btn-secondary" onClick={handleSave} type="button">Save to my account</button>
+            <button className="btn btn-secondary" onClick={handleSave} type="button">{editingId ? 'Update invoice' : 'Save to my account'}</button>
           </div>
           {saveMessage && <p style={{ marginTop: 12 }}>{saveMessage}</p>}
         </div>

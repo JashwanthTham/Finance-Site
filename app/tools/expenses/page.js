@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
 
 let idCounter = 1;
 const CATEGORIES = ['Rent', 'Supplies', 'Utilities', 'Marketing', 'Payroll', 'Other'];
 
 export default function ExpenseTracker() {
+  const router = useRouter();
   const [rows, setRows] = useState([
     { id: idCounter++, date: '', category: 'Supplies', desc: '', amount: 0 },
   ]);
@@ -58,7 +60,8 @@ export default function ExpenseTracker() {
         amount: r.amount,
       }))
     );
-    setSaveMessage(error ? `Couldn't save: ${error.message}` : 'Expenses saved to your account.');
+    if (!error) { router.push('/dashboard'); return; }
+    setSaveMessage(`Couldn't save: ${error.message}`);
   }
 
   return (
