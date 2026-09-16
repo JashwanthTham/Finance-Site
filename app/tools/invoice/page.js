@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabaseClient';
 
+export const dynamic = 'force-dynamic';
+
 let idCounter = 1;
 
 function todayStr() {
@@ -67,13 +69,27 @@ export default function InvoiceTool() {
   }
 
   async function handleSave() {
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData?.user) {
-    setSaveMessage('Create a free account to save invoices — this one still works to print or download.');
-    return;
-  }
-  if (editingId) {
-    const { error } = await supabase.from('invoices').update({
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData?.user) {
+      setSaveMessage('Create a free account to save invoices — this one still works to print or download.');
+      return;
+    }
+    if (editingId) {
+      const { error } = await supabase.from('invoices').update({
+        business_name: business,
+        client_name: client,
+        due_date: dueDate || null,
+        tax_rate: taxRate,
+        items,
+        total,
+        status,
+      }).eq('id', editingId);
+      if (!error) { router.push('/dashboard'); return; }
+      setSaveMessage(`Couldn't save: ${error.message}`);
+      return;
+    }
+    const { error } = await supabase.from('invoices').insert({
+      user_id: userData.user.id,
       business_name: business,
       client_name: client,
       due_date: dueDate || null,
@@ -81,24 +97,10 @@ export default function InvoiceTool() {
       items,
       total,
       status,
-    }).eq('id', editingId);
+    });
     if (!error) { router.push('/dashboard'); return; }
     setSaveMessage(`Couldn't save: ${error.message}`);
-    return;
   }
-  const { error } = await supabase.from('invoices').insert({
-    user_id: userData.user.id,
-    business_name: business,
-    client_name: client,
-    due_date: dueDate || null,
-    tax_rate: taxRate,
-    items,
-    total,
-    status,
-  });
-  if (!error) { router.push('/dashboard'); return; }
-  setSaveMessage(`Couldn't save: ${error.message}`);
-}
 
   function formatDate(d) {
     if (!d) return '—';
