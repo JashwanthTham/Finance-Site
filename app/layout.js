@@ -1,4 +1,5 @@
 import { Inter, Source_Serif_4 } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import Nav from '../components/Nav';
 
@@ -24,9 +25,12 @@ export default function RootLayout({ children }) {
       <a href="/faq">FAQ</a>
       <a href="/contact">Contact</a>
       <a href="/learn">Learn</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/terms">Terms</a>
     </span>
   </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
